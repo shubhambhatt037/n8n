@@ -1,0 +1,588 @@
+{
+  "name": "Youtube RAG",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "64e8af9d-fb11-4b3c-840e-28caf1fb70d5",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const videos = [];\nfor (const item of items[0].json.items) {\n  if (item.id.kind === \"youtube#video\") {\n    videos.push({\n      json: {\n        videoId: item.id.videoId,\n        title: item.snippet.title,\n        publishedAt: item.snippet.publishedAt,\n        description: item.snippet.description\n        // add other fields if needed\n      }\n    });\n  }\n}\nreturn videos;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "f5d7151e-c90a-4e26-ada1-e2f2125de05f",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        688,
+        0
+      ],
+      "id": "26fcc59b-88ef-4184-b107-c5e4aae837c8",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "youtuberag",
+          "mode": "list",
+          "cachedResultName": "youtuberag"
+        },
+        "options": {
+          "pineconeNamespace": "youtubeRag"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        1856,
+        16
+      ],
+      "id": "3804b846-1437-4e31-818c-1d4d3a08c9a1",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "eaKNfAFTGPt8mzN9",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        2016,
+        240
+      ],
+      "id": "f6044d69-87cd-486b-bd25-8af0eee9d720",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        2016,
+        432
+      ],
+      "id": "7d76f711-d58a-4b0c-897c-b48816b2d474",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        304
+      ],
+      "id": "c3dcd45f-f3e9-490a-8633-bb4a8fee2d38",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ML0MTn4oISnms6se",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        400
+      ],
+      "id": "5ff8f60a-49c5-44f3-a4d2-711083a9ef48",
+      "name": "When chat message received",
+      "webhookId": "908fcde3-78c7-4158-a2f3-059ff6beaa54"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a helpful assistant that answers questions based SOLELY on a knowledge base created from YouTube video transcriptions and their translations (Hindi and English).\nAll data comes from YouTube videos and their manual or automatic translations.\n\n———\nCONTEXT:\n{context}\n———\n\nInstructions:\nRespond ONLY using the context provided above. If the context does not answer the question, say \"I could not find the answer in the current data.\"\n\nProvide a clear and concise answer in the same language as the user’s question (English or Hindi).\n\nWhere useful, cite both Hindi and English content, but do not make up information.\n\nIf a YouTube video link is present in the returned data, mention it as the source.\n\nUser Question: {{ $json.chatInput }}\n\nAnswer as a helpful expert:",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        512,
+        400
+      ],
+      "id": "541c001d-6266-44c6-81a6-2181a6ff36c7",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        512,
+        656
+      ],
+      "id": "e8d3d961-357e-447b-8e51-281a8cc118dd",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ML0MTn4oISnms6se",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        640,
+        800
+      ],
+      "id": "bcdf7e42-852a-4c62-9b26-597ee8067913",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        688,
+        1200
+      ],
+      "id": "b3c1ff9d-8aea-4eae-85bc-ea215c6c580a",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ML0MTn4oISnms6se",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Call this tool to access the database to answer the user's question"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        784,
+        592
+      ],
+      "id": "b10c06f5-864e-4848-999f-d113027af984",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "youtuberag",
+          "mode": "list",
+          "cachedResultName": "youtuberag"
+        },
+        "options": {
+          "pineconeNamespace": "youtubeRag"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        688,
+        992
+      ],
+      "id": "5e6d4d38-cbe1-4bc0-a300-7f91baa4d12e",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "eaKNfAFTGPt8mzN9",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        848,
+        784
+      ],
+      "id": "1978bcaa-a23a-490c-a205-df17e95d334b",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ML0MTn4oISnms6se",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.supadata.ai/v1/transcript?url=https://www.youtube.com/watch?v={{ $json.videoId }}&text=true",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "sd_82dc82dfb22b9a56282fc34abe9858f2"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1008,
+        16
+      ],
+      "id": "c6bbf4c9-bbbd-46bd-8be6-f9eef840218c",
+      "name": "Fetch Transcript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://translation.googleapis.com/language/translate/v2?key=AIzaSyAI2j_J6mFxP-uPoC9StKkx1EKrSs8j-O8",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"q\": \"={{ $json.content }}\",\n  \"source\": \"hi\",\n  \"target\": \"en\",\n  \"format\": \"text\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        16
+      ],
+      "id": "915ee78a-da73-4617-b0da-9e0c67877e42",
+      "name": "Translate to English"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d81cc8ff-07bf-42b1-b350-543a546ca3cd",
+              "name": "videoId",
+              "value": "={{ $('Code').item.json.videoId }}",
+              "type": "string"
+            },
+            {
+              "id": "14f46a15-fe8b-4090-adb8-8974f7ed9676",
+              "name": "videoUrl",
+              "value": "=https://www.youtube.com/watch?v={{ $('Code').item.json.videoId }}",
+              "type": "string"
+            },
+            {
+              "id": "787e767a-9575-45bb-a6cb-5d0fd3a0d565",
+              "name": "content_hi",
+              "value": "={{ $('Fetch Transcript').item.json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "30746645-84c4-43a9-a325-f87908f28e86",
+              "name": "content_en",
+              "value": "={{ $json.data.translations[0].translatedText }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1568,
+        16
+      ],
+      "id": "6236734a-0d0b-4f60-81cd-0d01ce293e9c",
+      "name": "Set Fields"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/search\n",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyD0ClFwNBaK7DDavvKYSrUwsWQe7cuM4Ns"
+            },
+            {
+              "name": "channelId",
+              "value": "UCEk1jBxAl6fe-_G37G7huQA"
+            },
+            {
+              "name": "part",
+              "value": "snippet,id"
+            },
+            {
+              "name": "order",
+              "value": "date"
+            },
+            {
+              "name": "maxResults",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d4253abf-78d8-4095-afec-d6409d9f7e04",
+      "name": "Fetch from Youtube"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Fetch from Youtube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Fetch Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Transcript": {
+      "main": [
+        [
+          {
+            "node": "Translate to English",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translate to English": {
+      "main": [
+        [
+          {
+            "node": "Set Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Fields": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch from Youtube": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1c34d2ed-d3ee-42f9-a949-d52bbe162df3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4adc94ddffe83227552a82f39a19246dcdf6359959de8179a8c44253481947a7"
+  },
+  "id": "f6RbsEMjb7P8MkAR",
+  "tags": []
+}
