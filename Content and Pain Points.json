@@ -1,0 +1,446 @@
+{
+  "name": "Content and Pain Points",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        112,
+        0
+      ],
+      "id": "6ac6e3ce-d29d-421e-adf6-a94f90649fbe",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "subreddit": "n8n",
+        "limit": 10,
+        "filters": {
+          "category": "hot"
+        }
+      },
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "7b04ac97-9a01-456c-81ac-257ef179d06c",
+      "name": "Get many posts",
+      "credentials": {
+        "redditOAuth2Api": {
+          "id": "4mjKwRcBCLDFbC84",
+          "name": "Reddit account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.selftext }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Pain Point",
+              "description": "Use this category if the post appears to possibly came from a business owner requesting help with a certain AI or Automation process. For context I am a AI and automation expert, specifically with low code automated workflow, AI agents, and more."
+            },
+            {
+              "category": "Post",
+              "description": "Classify whether the following post should be selected for reposting on X.\n\nSelect the post ONLY if it meets one or more of these criteria:\n\n1. The post describes a win, success story, or a positive outcome that made the author feel happy or successful, directly related to automation or AI automation.\n\n2. The post mentions time saved or effort reduced due to automation or AI automation.\n\n3. The post provides a positive insight about AI automation, encouraging its use or showing its potential benefits (without promoting or advertising a specific product/tool).\n\nDo NOT select the post if:\n\n1. It promotes or advertises a specific product, tool, or service.\n\n2. It is negative, discouraging, or neutral towards automation."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        704,
+        0
+      ],
+      "id": "04599918-4f0c-44a2-a354-c4a477964113",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        704,
+        208
+      ],
+      "id": "3bcdd999-7387-497d-8641-812f0a8793f3",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "xGXWjryhftiGEMFa",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.selftext }}",
+        "options": {
+          "systemMessage": "## Role\nYou are an expert AI and Automation consultant.\n\n## Task\\nYour task is to:\n\n1. Analyze the provided reddit post/comment from a user who is requesting an AI automation system to be created.\n2. Summarize the request into a concise, yet comprehensive paragraph detailing the exact system the user wants to be built.\n\nFor context, I run an AI Automation agency which builds automated workflows, AI agents, and more, primarily using N8N.\n\nOnly output the summary. Do not provide an explanation"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        1184,
+        -320
+      ],
+      "id": "b4cf5f85-9e99-4569-9d2b-083db7a01c72",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        -96
+      ],
+      "id": "64f0f919-f8cb-4a0d-af36-6044178e583d",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "xGXWjryhftiGEMFa",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.selftext }}",
+        "options": {
+          "systemMessage": "You are rewriting the following Reddit post into an engaging X (Twitter) post.\n\nGoals:\n\nStart with a hook highlighting the pain/problem in a relatable and curiosity-inducing way.\n\nFollow with a short, conversational paragraph describing the scenario and the solution that worked (from the Reddit post).\n\nCreate FOMO for readers who face the same problem, making them feel they might be missing out if they don’t take action.\n\nDo NOT claim that I personally built the solution — instead, frame it as “the” solution that works, positioning me implicitly as the right person to make it happen.\n\nKeep the tone simple, friendly, and authentic — avoid jargon unless necessary.\n\nStay under 240 characters if possible.\n\nOutput format: A single rewritten X post.\n\nExample style:\n❌ “I built an automation…” → Avoid this.\n✅ “Imagine cutting your client onboarding time from 2 days to 10 minutes… all while you sleep. That’s exactly what this workflow did.”\n\nNow rewrite this post."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        176
+      ],
+      "id": "029be069-d037-4564-bca4-f94b2c1b8644",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        400
+      ],
+      "id": "d1e37230-7fca-440f-9a73-885bf28c2587",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "xGXWjryhftiGEMFa",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1X9U-uU0wGbH47XCqwBREbQZl_trI2ME_JmOxF4XUoy4",
+          "mode": "list",
+          "cachedResultName": "X Content",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1X9U-uU0wGbH47XCqwBREbQZl_trI2ME_JmOxF4XUoy4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1X9U-uU0wGbH47XCqwBREbQZl_trI2ME_JmOxF4XUoy4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Content": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "Content"
+          ],
+          "schema": [
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1648,
+        176
+      ],
+      "id": "4cb76309-a3d5-40ee-81c3-6a7f8deb97d7",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rLTZk4qn8eA2xAJV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1HAtNWvlBcsYJOmZZEWAVLzmv6oigxwZO0sO02IrzbmM",
+          "mode": "list",
+          "cachedResultName": "Automation Pain Points",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HAtNWvlBcsYJOmZZEWAVLzmv6oigxwZO0sO02IrzbmM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HAtNWvlBcsYJOmZZEWAVLzmv6oigxwZO0sO02IrzbmM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Pain Points": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "Pain Points"
+          ],
+          "schema": [
+            {
+              "id": "Pain Points",
+              "displayName": "Pain Points",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1664,
+        -320
+      ],
+      "id": "09733759-6ac3-4fe0-88a7-698468c88984",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rLTZk4qn8eA2xAJV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1X9U-uU0wGbH47XCqwBREbQZl_trI2ME_JmOxF4XUoy4",
+          "mode": "list",
+          "cachedResultName": "X Content",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1X9U-uU0wGbH47XCqwBREbQZl_trI2ME_JmOxF4XUoy4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1X9U-uU0wGbH47XCqwBREbQZl_trI2ME_JmOxF4XUoy4/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Mark",
+              "lookupValue": "0"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": "={{ true }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1888,
+        176
+      ],
+      "id": "41e913f9-a8a9-4bff-82b5-4fe5f3165d0b",
+      "name": "Get row(s) in sheet",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rLTZk4qn8eA2xAJV",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many posts": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ef04e832-10ef-4d78-848f-4f7c5d94c07e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4adc94ddffe83227552a82f39a19246dcdf6359959de8179a8c44253481947a7"
+  },
+  "id": "P8fXtWfPvvfj0KgA",
+  "tags": []
+}
